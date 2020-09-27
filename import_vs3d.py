@@ -47,11 +47,11 @@ def ffp_to_float (val):
     e = (val & 0x7f) - 0x40     # Bits 6:0: Excess-64 exponent
     if val & 0x80 != 0:         # Bit 7: Sign
         m = -m
-        
+
     return pow (2, e) * m / (1 << 24)
 
 
-def read_some_data (context, filepath, use_some_setting):
+def read_vs3d_data (context, filepath, use_some_setting):
     """Import VideoScape-3D object file"""
     verts = []
     faces = []
@@ -73,9 +73,13 @@ def read_some_data (context, filepath, use_some_setting):
             # Read polygons/faces.
             for line in f:
                 vals = [int (i) for i in line.split()]
-                nverts = vals[0]
-                faces.append (vals[1:nverts + 1])
-                if vals[nverts + 1] < 0:
+                vtxcnt = vals[0]
+                if not all ((x >= 0  and  x < nverts) for x in vals[1:vtxcnt + 1]):
+                    print ("Polygon indices out of range; object not loaded.")
+                    return {'FINISHED'}
+
+                faces.append (vals[1:vtxcnt + 1])
+                if vals[vtxcnt + 1] < 0:
                     # If the color code is negative, there are detail polygons
                     # present.  In such a case, the immediately succeeding line
                     # contains a single value describing the count of detail
@@ -100,18 +104,22 @@ def read_some_data (context, filepath, use_some_setting):
                 buf = f.read (3 * 4)
                 x, y, z = struct.unpack (">3I", buf)
                 verts.append ((ffp_to_float (x), ffp_to_float (y), ffp_to_float (z)))
-                
+
             # Read polygons/faces.
             while True:
                 buf = f.read (2)
                 if not buf:
                     break
-                nverts = struct.unpack (">H", buf)[0]
-                buf = f.read ((nverts + 1) * 2)
-                fmt = ">" + str (nverts) + "Hh"     # Color code is signed.
+                vtxcnt = struct.unpack (">H", buf)[0]
+                buf = f.read ((vtxcnt + 1) * 2)
+                fmt = ">" + str (vtxcnt) + "Hh"     # Color code is signed.
                 indices = list (struct.unpack (fmt, buf))
-                faces.append (indices[0:nverts])
-                if indices[nverts] < 0:
+                if not all ((x >= 0  and  x < nverts) for x in indices[0:vtxcnt]):
+                    print ("Polygon indices out of range; object not loaded.")
+                    return {'FINISHED'}
+
+                faces.append (indices[0:vtxcnt])
+                if indices[vtxcnt] < 0:
                     # Detail polygons present (see above comment for text
                     # format).  Workaround by eating the detail count.
                     #
@@ -120,7 +128,7 @@ def read_some_data (context, filepath, use_some_setting):
         else:
             printf ("Unrecognized header.")
             return {'FINISHED'}
-                
+
 
     mesh = bpy.data.meshes.new (os.path.basename (filepath))
     obj = bpy.data.objects.new (mesh.name, mesh)
@@ -140,10 +148,10 @@ from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 
 
-class ImportSomeData (Operator, ImportHelper):
+class ImportVS3DFileSelector (Operator, ImportHelper):
     """This appears in the tooltip of the operator and in the generated docs"""
-    bl_idname = "import_test.some_data"  # important since its how bpy.ops.import_test.some_data is constructed
-    bl_label = "Import Some Data"
+    bl_idname = "org_ewhac.import_vs3d_file_selector"
+    bl_label = "Import VS3D Object"
 
     # ImportHelper mixin class uses this
     filename_ext = ".txt"
@@ -167,21 +175,21 @@ class ImportSomeData (Operator, ImportHelper):
     )
 
     def execute (self, context):
-        return read_some_data (context, self.filepath, self.use_setting)
+        return read_vs3d_data (context, self.filepath, self.use_setting)
 
 
 # Only needed if you want to add into a dynamic menu
 def menu_func_import (self, context):
-    self.layout.operator (ImportSomeData.bl_idname, text="Text Import Operator")
+    self.layout.operator (ImportVS3DFileSelector.bl_idname, text="Text Import Operator")
 
 
 def register():
-    bpy.utils.register_class (ImportSomeData)
+    bpy.utils.register_class (ImportVS3DFileSelector)
     bpy.types.TOPBAR_MT_file_import.append (menu_func_import)
 
 
 def unregister():
-    bpy.utils.unregister_class (ImportSomeData)
+    bpy.utils.unregister_class (ImportVS3DFileSelector)
     bpy.types.TOPBAR_MT_file_import.remove (menu_func_import)
 
 
@@ -189,4 +197,4 @@ if __name__ == "__main__":
     register()
 
     # test call
-    bpy.ops.import_test.some_data ('INVOKE_DEFAULT')
+    bpy.ops.org_ewhac.import_vs3d_data ('INVOKE_DEFAULT')

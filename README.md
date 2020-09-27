@@ -2,6 +2,7 @@
 
 This utility will allow Blender to load object files created for use with
 VideoScape-3D, a rendering and animation package for the Amiga Computer.
+This is known to work on Blender 2.8x and 2.90.
 
 You can watch me clumsily piece this together in my [YouTube
 video](https://youtu.be/fXoUjRVV7FM).
@@ -39,10 +40,10 @@ or on YouTube if you'd like to see that added.)
 
 ### Detail Polygons ###
 
-As a compromise for the lack of texture mapping, VideoScape supported
-"detail polygons" -- polygons that were rendered in specified order after
-the parent polygon, thereby allowing you to draw over the parent to add
-details.
+As a creative compromise for the lack of texture mapping, VideoScape
+supported "detail polygons" -- polygons that were rendered in specified
+order after the parent polygon, thereby allowing you to draw over the parent
+to add details.
 
 It is unclear how to properly support or emulate detail polygons in Blender,
 especially since they are not required to be bounded by, or even co-planar
@@ -58,8 +59,9 @@ VideoScape supported N-gons, where N could be as few as 1.  Single-point
 "polygons" were used to create star fields (each star a single pixel).
 2-point polygons were used to render straight lines (one pixel wide).
 
-As of this writing, 1- and 2-point polygons are loaded by the plugin, but
-Blender will not display or render them outside of edit mode.
+As of this writing, 1- and 2-point polygons are loaded by the plugin but, as
+they are degenerate polygons with zero area, Blender will not display or
+render them outside of edit mode.
 
 
 ### Linked Objects ###
@@ -72,8 +74,8 @@ and required precise knowledge of the load order and vertex layout of
 objects.
 
 This will not work, and almost certainly cannot be made to work.  As of this
-writing, loading objects with negative polygon indices will crash Blender
-(FIXME).
+writing, loading objects with negative polygon indices will cause the load
+to abort.
 
 
 ## VideoScape History ##
