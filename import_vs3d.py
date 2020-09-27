@@ -51,7 +51,7 @@ def ffp_to_float (val):
     return pow (2, e) * m / (1 << 24)
 
 
-def read_vs3d_data (context, filepath, use_some_setting):
+def read_vs3d_data (context, filepath, flip_axes):
     """Import VideoScape-3D object file"""
     verts = []
     faces = []
@@ -129,6 +129,10 @@ def read_vs3d_data (context, filepath, use_some_setting):
             printf ("Unrecognized header.")
             return {'FINISHED'}
 
+    # Flip the axes from left- to right-handed?
+    if flip_axes:
+        verts = [(f[0], -f[2], f[1]) for f in verts]
+
 
     mesh = bpy.data.meshes.new (os.path.basename (filepath))
     obj = bpy.data.objects.new (mesh.name, mesh)
@@ -156,26 +160,14 @@ class ImportVS3DFileSelector (Operator, ImportHelper):
     # ImportHelper mixin class uses this
     filename_ext = ".txt"
 
-    # List of operator properties, the attributes will be assigned
-    # to the class instance from the operator settings before calling.
-    use_setting: BoolProperty (
-        name="Example Boolean",
-        description="Example Tooltip",
-        default=True,
-    )
-
-    type: EnumProperty (
-        name="Example Enum",
-        description="Choose between two items",
-        items=(
-            ('OPT_A', "First Option", "Description one"),
-            ('OPT_B', "Second Option", "Description two"),
-        ),
-        default='OPT_A',
+    flip_axes: BoolProperty (
+        name        = "Flip Axes",
+        description = "Convert from VS3D left-handed to Blender right-handed coordinates",
+        default     = False,
     )
 
     def execute (self, context):
-        return read_vs3d_data (context, self.filepath, self.use_setting)
+        return read_vs3d_data (context, self.filepath, self.flip_axes)
 
 
 # Only needed if you want to add into a dynamic menu
