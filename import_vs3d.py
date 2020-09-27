@@ -197,4 +197,4 @@ if __name__ == "__main__":
     register()
 
     # test call
-    bpy.ops.org_ewhac.import_vs3d_data ('INVOKE_DEFAULT')
+    bpy.ops.org_ewhac.import_vs3d_file_selector ('INVOKE_DEFAULT')
