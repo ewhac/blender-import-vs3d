@@ -26,8 +26,8 @@ select it.  The object should appear in your workspace.
 
 ### File Formats ###
 
-Both text and binary object formats are supported.  Error tolerance is meh;
-please don't stress the parser.
+Both text and binary object formats are supported.  Tolerance for files with
+errors is meh; please don't stress the parser.
 
 Camera, motion, and scene files are not supported.
 

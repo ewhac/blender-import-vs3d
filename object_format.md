@@ -78,8 +78,9 @@ The line is structured as follows:
     number of vertices in the polygon.
   * **Vertex Indices:** The following `poly_vtx_count` integers denote
     indices into the previously appearing list of vertices.  These indices
-    are zero-based; thus an index of 0 refers to the first vertex in the
-    list.  Indices that are out of range (i.e. `< 0` or `>= vtx_count`) have
+    are zero-based; an index of 0 refers to the first vertex in the list.
+    Indices that are out of range (i.e. `< 0` or `>= vtx_count`), or
+    specifying fewer than `poly_vtx_count` indices on the line, will cause
     undefined behavior, including crashing the program.
   * **Color code/surface attributes:** The final integer specifies the
     color and surface attributes of the polygon (discussed in the next
@@ -88,14 +89,14 @@ The line is structured as follows:
 Polygons continue until end-of-file.
 
 Polygons must have one or more vertices.  One-vertex polygons are intended
-to be rendered as a single pixel.  Two-vertex polygons are intended to be
+to be rendered as single pixels.  Two-vertex polygons are intended to be
 rendered as single-pixel-wide lines.
 
 Polygons are only visible from one side; polygons facing away from the
 camera will not be rendered.   Polygon vertices should be specified in
 clockwise order as viewed from the visible side.
 
-For lighting and visibility testing purposes, the polygon's normal is
+For lighting and visibility testing purposes, the polygon's normal vector is
 calculated from the first three vertices; thus you should ensure these
 vertices are not collinear or counter-clockwise.  One- and two-vertex
 polygons are deemed as always visible, fully illuminated.
@@ -108,9 +109,10 @@ VS3D that enforces this.
 
 For each line describing a polygon, the final integer describes the
 polygon's surface color and attributes; the absolute value of this integer
-is used (negative values are allowed, indicating this polygon has detail
-polygons (discussed later)).  Absolute values from 0 - 255 are "normal"
-color codes.  Absolute values of 256 or greater are special surface codes.
+is used (negative values are allowed; a negative value indicates this
+polygon has detail polygons (discussed later)).  Absolute values from 0 -
+255 are "normal" color codes.  Absolute values of 256 or greater are special
+surface codes.
 
 Attributes marked as v2.0 were introduced in VideoScape version 2.0, and are
 not available in v1.0.
@@ -164,10 +166,10 @@ as follows:
 | 3      | 48 - 63    | Unfilled outline (wireframe) |
 
 A "glossy" surface means the polygon has a specular attribute, and will
-appear to reflect the white light source off the surface.  A "matte" surface
-has no specular attribute; it will only appear in the base color.  An
-"unshaded " polygon is rendered fully illuminated, regardless of its
-orientation to the light source.
+appear to reflect white light from the light source.  A "matte" surface has
+no specular attribute; it will only appear in the base color.  An "unshaded"
+polygon is rendered fully illuminated, regardless of its orientation to the
+light source(s).
 
 
 ##### Translucent Polygons (v2.0) #####
@@ -213,7 +215,8 @@ rendered immediately after the "parent" polygon, in the order in which they
 appear in the file.  In other words, the parent polygon and its detail
 polygons are treated by VS3D as a single unit.
 
-The structure of a detail polygon appearing in the file is as follows:
+The structure of a polygon with detail polygons appearing in the file is as
+follows:
   * A polygon indicates it has detail polygons by specifying a negative value
     for the color code.
   * On the immediately following line appears a single integer specifying
@@ -232,8 +235,8 @@ follows:
     2 2 4 0
 ```
 
-Once `detail_count` detail polygons have been read, normal polygons may
-follow.
+Once `detail_count` detail polygons have been read, additional normal
+polygons may follow.
 
 Detail polygons are not recursive; only a single level is supported.
 
@@ -247,7 +250,7 @@ of their actual orientation.
 
 Depth-sorting and visibility testing is calculated only for the parent
 polygon.  If the parent polygon is deemed visible, it and all its details are
-rendered, regardless of where the details might actually be.
+rendered, regardless of where the details might actually be located.
 
 The color code for a shaded, matte black polygon is 0.  If you want such a
 polygon to have detail polygons, -0 won't work.  Use -8 instead.
@@ -304,7 +307,10 @@ specified by a series of 16-bit integers having the following structure:
     number of vertices in the polygon.  This integer is unsigned.
   * **Vertex Indices:** The following `poly_vtx_count` integers denote
     indices into the previously appearing array of vertices.  These indices
-    are zero-based and unsigned.
+    are zero-based and unsigned.  (There is reason to believe that VS3D
+    actually treated these indices as signed values.  However, Modeler-3D
+    never output negative values, so it is unlikely you will encounter such
+    files in the wild.)
   * **Color code/surface attributes:** The final integer specifies the
     color and surface attributes of the polygon.  This integer is *signed*,
     to allow for detail polygons.
@@ -318,5 +324,4 @@ Binary detail polygons are exactly analogous to their text-mode
 counterparts.  The value `detail_count` is a 16-bit unsigned integer, and
 immediately follows the negative color code from the parent polygon.  The
 following `detail_count` polygons are formatted exactly as normal binary
-polygons.
-
+polygons, after which additional normal polygons may follow.
